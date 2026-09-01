@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>โปรแกรมคำนวณเงินเดือน (Mobile-Friendly)</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg: #F3F4F6;
+            --card: #FFFFFF;
+            --text: #1F2937;
+            --border: #E5E7EB;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 12px; /* ลด Padding สำหรับขอบมือถือ */
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background-color: var(--card);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        h1 { font-size: 22px; color: var(--primary); margin-top: 0; }
+        h2 { font-size: 18px; color: var(--primary); margin-top: 0; }
+        
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 14px;}
+        
+        input[type="month"] {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 16px; /* ป้องกัน iOS Zoom */
+            height: 48px;
+        }
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%; /* ให้ปุ่มเต็มจอในมือถือ */
+            height: 48px;
+            transition: 0.2s;
+            box-sizing: border-box;
+        }
+        button:active { background-color: var(--primary-hover); transform: scale(0.98); }
+        
+        /* สไตล์ตารางแนวนอน - ปรับให้ไถบนมือถือลื่นขึ้น */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 16px;
+            padding-bottom: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            -webkit-overflow-scrolling: touch; /* สมูทสโครลบน iOS */
+        }
+        table {
+            border-collapse: collapse;
+            min-width: 100%;
+            table-layout: fixed;
+        }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 6px;
+            text-align: center;
+            min-width: 65px; /* ความกว้างขั้นต่ำสำหรับนิ้วจิ้ม */
+        }
+        
+        .month-header {
+            font-size: 14px;
+            padding: 10px;
+            border-bottom: 2px solid var(--border);
+        }
+        .header-target { background-color: #D1FAE5; color: #065F46; }
+        .col-target { background-color: #ECFDF5; }
+        .header-prev { background-color: #DBEAFE; color: #1E40AF; }
+        .col-prev { background-color: #EFF6FF; } 
+        
+        .date-header {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .status-labels {
+            font-size: 9px;
+            font-weight: normal;
+            color: #6B7280;
+            line-height: 1.2;
+            margin-top: 4px;
+            white-space: nowrap;
+        }
+        
+        /* Dropdown ที่เหมาะกับนิ้วมือ */
+        select.work-type {
+            width: 100%;
+            height: 40px; /* เพิ่มความสูงให้นิ้วจิ้มง่าย */
+            padding: 0 2px;
+            border-radius: 6px;
+            border: 1px solid #D1D5DB;
+            font-size: 16px; /* บังคับ 16px ป้องกันมือถือซูมเข้า */
+            cursor: pointer;
+            text-align: center;
+            font-weight: bold;
+            background-color: transparent;
+            -webkit-appearance: none; /* ซ่อนลูกศรใน iOS/Android บางรุ่นเพื่อให้ข้อความอยู่ตรงกลาง */
+            appearance: none;
+        }
+        
+        /* ผลลัพธ์ทางการเงิน */
+        .result-box {
+            display: grid;
+            grid-template-columns: 1fr; /* บนมือถือให้เรียงคอลัมน์เดียวแนวตั้ง */
+            gap: 12px;
+            margin-top: 16px;
+        }
+        @media (min-width: 768px) {
+            .result-box { grid-template-columns: repeat(3, 1fr); }
+            .card { padding: 24px; }
+            button { width: auto; }
+            input[type="month"] { max-width: 250px; }
+        }
+        
+        .summary-card {
+            background-color: #EEF2FF;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .summary-card h4 { margin: 0 0 4px 0; color: #3730A3; font-size: 15px; }
+        .summary-card p { margin: 0 0 8px 0; font-size: 13px; color: #4B5563; }
+        .summary-card .amount { font-size: 24px; font-weight: bold; color: var(--primary); }
+        .hidden { display: none; }
+        
+        /* กล่องอธิบายผลลัพธ์ */
+        .dynamic-explanation {
+            margin-top: 20px;
+            padding: 16px;
+            background-color: #F8FAFC;
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .dynamic-explanation h3 { color: #0F172A; margin-bottom: 12px; font-size: 16px;}
+        .dynamic-explanation ul { margin-top: 5px; margin-bottom: 15px; padding-left: 20px; }
+        .dynamic-explanation li { margin-bottom: 5px; color: #334155; }
+        
+        .rollover-alert {
+            background-color: #FEF2F2;
+            padding: 12px;
+            border-left: 4px solid #EF4444;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        
+        .explanation { background-color: #FFFBEB; border-left: 4px solid #F59E0B; padding: 16px; border-radius: 8px; font-size: 14px;}
+        .explanation h3 { font-size: 16px; }
+        .explanation ul { padding-left: 20px; }
+        
+        /* Hint box บนตาราง */
+        .hint-box {
+            font-size: 11px;
+            background: white;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #E5E7EB;
+            margin-bottom: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h1>🗓️ ระบบคำนวณเงินเดือน</h1>
+        
+        <div class="form-group">
+            <label for="targetMonth">เลือกเดือนที่รับเงิน (รอบบิลปัจจุบัน):</label>
+            <input type="month" id="targetMonth" required>
+        </div>
+        <button onclick="generateTimesheet()">สร้างตารางลงเวลา</button>
+    </div>
+
+    <div id="timesheetSection" class="card hidden">
+        <h2>ตารางลงเวลาทำงาน</h2>
+        <div class="hint-box">
+            <b>คำใบ้สถานะใต้ตัวเลขวันที่:</b><br>
+            💰 = นับในค่าแรง (16 ถึง 15) | 🏖️ = นับในวันหยุด (1 ถึง สิ้นเดือนก่อน)
+        </div>
+        
+        <div class="table-wrapper">
+            <table id="timesheetTable">
+                <thead>
+                    <tr id="monthRow"></tr>
+                    <tr id="dateRow"></tr>
+                </thead>
+                <tbody>
+                    <tr id="inputRow"></tr>
+                </tbody>
+            </table>
+        </div>
+        <br>
+        <button onclick="calculatePayroll()">คำนวณเงินเดือนสุทธิ</button>
+    </div>
+
+    <div id="resultSection" class="card hidden">
+        <h2>💰 สรุปยอดเงินสุทธิ</h2>
+        <div class="result-box">
+            <div class="summary-card">
+                <h4>1. เงินเดือนค่าแรงปกติ</h4>
+                <p>หักวัน ย และ 2ย ออกแล้ว (400 บ./วัน)</p>
+                <div class="amount" id="resBasePay">0 บาท</div>
+            </div>
+            <div class="summary-card">
+                <h4>2. ค่าทำงานวันหยุด</h4>
+                <p>คิดเฉพาะเดือนก่อนหน้า (2ย=800, 2น=400)</p>
+                <div class="amount" id="resHolidayPay">0 บาท</div>
+            </div>
+            <div class="summary-card" style="background-color: #ECFDF5; border-color: #10B981;">
+                <h4 style="color: #065F46;">ยอดรับสุทธิรวมทั้งหมด</h4>
+                <p>โอนเข้าบัญชีรอบบิลนี้</p>
+                <div class="amount" style="color: #059669;" id="resNetPay">0 บาท</div>
+            </div>
+        </div>
+        
+        <div id="dynamicExplanation" class="dynamic-explanation"></div>
+    </div>
+
+    <div class="card explanation">
+        <h3>💡 หลักการคำนวณพื้นฐาน</h3>
+        <ul>
+            <li><b>ค่าแรงปกติ (400 บ./วัน):</b> ตัดรอบวันที่ 16 เดือนก่อน - 15 เดือนนี้ โดยจะ <b>หัก</b> วันที่ลง "ย" และ "2ย" ออกจากจำนวนวันทั้งหมด (ส่วน "2น" ให้นับรวมเป็นวันทำงานปกติ)</li>
+            <li><b>ค่าทำงานวันหยุด:</b> ตัดรอบปฏิทินเต็มเดือน (วันที่ 1 - วันสิ้นเดือน) ของ <b>เดือนก่อนหน้า</b> เท่านั้น (2ย = 800 บาท, 2น = 400 บาท)</li>
+            <li><b>หมายเหตุ:</b> ค่าเหนื่อยวันหยุดของวันที่ 1-15 เดือนปัจจุบัน จะถูกยกยอดไปจ่ายในรอบบิลของเดือนถัดไปเสมอ</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    const DAILY_RATE = 400;
+    const RATE_2Y = 800;
+    const RATE_2N = 400;
+    const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+    function getMonthName(m) { return monthNames[m - 1]; }
+
+    function generateTimesheet() {
+        const monthInput = document.getElementById('targetMonth').value;
+        if (!monthInput) {
+            alert('กรุณาเลือกเดือนก่อนครับ');
+            return;
+        }
+
+        const [targetYear, targetMonth] = monthInput.split('-').map(Number);
+        
+        let prevMonth = targetMonth - 1;
+        let prevYear = targetYear;
+        if (prevMonth === 0) {
+            prevMonth = 12;
+            prevYear -= 1;
+        }
+
+        const daysInPrevMonth = new Date(prevYear, prevMonth, 0).getDate();
+
+        const monthRow = document.getElementById('monthRow');
+        const dateRow = document.getElementById('dateRow');
+        const inputRow = document.getElementById('inputRow');
+
+        monthRow.innerHTML = '';
+        dateRow.innerHTML = '';
+        inputRow.innerHTML = '';
+
+        const thTarget = document.createElement('th');
+        thTarget.colSpan = 15;
+        thTarget.className = 'month-header header-target';
+        thTarget.innerText = `${getMonthName(targetMonth)} (1-15)`;
+        monthRow.appendChild(thTarget);
+
+        const thPrev = document.createElement('th');
+        thPrev.colSpan = daysInPrevMonth;
+        thPrev.className = 'month-header header-prev';
+        thPrev.innerText = `เดือนก่อน: ${getMonthName(prevMonth)} (1-${daysInPrevMonth})`;
+        monthRow.appendChild(thPrev);
+
+        for (let d = 1; d <= 15; d++) {
+            createCell(d, true, false, dateRow, inputRow, 'col-target', true);
+        }
+        for (let d = 1; d <= daysInPrevMonth; d++) {
+            createCell(d, d >= 16, true, dateRow, inputRow, 'col-prev', false);
+        }
+
+        document.getElementById('timesheetSection').classList.remove('hidden');
+        document.getElementById('resultSection').classList.add('hidden');
+    }
+
+    function createCell(date, isBase, isHoliday, dateRow, inputRow, columnClass, isTargetMonth) {
+        const th = document.createElement('th');
+        th.className = `date-header ${columnClass}`; 
+        th.innerHTML = `
+            ${date}
+            <div class="status-labels">
+                ${isBase ? '✅💰' : '❌💰'}<br>
+                ${isHoliday ? '✅🏖️' : '❌🏖️'}
+            </div>
+        `;
+        dateRow.appendChild(th);
+
+        const td = document.createElement('td');
+        td.className = columnClass; 
+        td.innerHTML = `
+            <select class="work-type" data-base="${isBase}" data-holiday="${isHoliday}" data-istarget="${isTargetMonth}" onchange="updateCellColor(this)">
+                <option value="ปกติ">ปกติ</option>
+                <option value="ย">ย</option>
+                <option value="2ย">2ย</option>
+                <option value="2น">2น</option>
+            </select>
+        `;
+        inputRow.appendChild(td);
+    }
+
+    function updateCellColor(select) {
+        const val = select.value;
+        if (val === 'ย') {
+            select.style.backgroundColor = '#FEE2E2'; 
+            select.style.color = '#991B1B';
+        } else if (val === '2ย') {
+            select.style.backgroundColor = '#FEF08A'; 
+            select.style.color = '#854D0E';
+        } else if (val === '2น') {
+            select.style.backgroundColor = '#A7F3D0'; 
+            select.style.color = '#065F46';
+        } else {
+            select.style.backgroundColor = 'transparent'; 
+            select.style.color = 'black';
+        }
+    }
+
+    function calculatePayroll() {
+        const selects = document.querySelectorAll('.work-type');
+        let baseTotalDays = 0, baseDeductedDays = 0, count2Y_Holiday = 0, count2N_Holiday = 0;
+        let count2Y_Rollover = 0, count2N_Rollover = 0;
+
+        selects.forEach(select => {
+            const type = select.value;
+            const isBase = select.dataset.base === "true";
+            const isHoliday = select.dataset.holiday === "true";
+            const isTargetMonth = select.dataset.istarget === "true";
+
+            if (isBase) {
+                baseTotalDays++;
+                if (type === 'ย' || type === '2ย') baseDeductedDays++;
+            }
+            if (isHoliday) {
+                if (type === '2ย') count2Y_Holiday++;
+                if (type === '2น') count2N_Holiday++;
+            }
+            if (isTargetMonth) {
+                if (type === '2ย') count2Y_Rollover++;
+                if (type === '2น') count2N_Rollover++;
+            }
+        });
+
+        const basePayableDays = baseTotalDays - baseDeductedDays;
+        const totalBasePay = basePayableDays * DAILY_RATE;
+        const sum2Y_Holiday = count2Y_Holiday * RATE_2Y;
+        const sum2N_Holiday = count2N_Holiday * RATE_2N;
+        const totalHolidayPay = sum2Y_Holiday + sum2N_Holiday;
+        const netPay = totalBasePay + totalHolidayPay;
+
+        document.getElementById('resBasePay').innerText = totalBasePay.toLocaleString() + ' บาท';
+        document.getElementById('resHolidayPay').innerText = totalHolidayPay.toLocaleString() + ' บาท';
+        document.getElementById('resNetPay').innerText = netPay.toLocaleString() + ' บาท';
+        
+        let dynamicHTML = `
+            <h3>📝 รายละเอียดการคำนวณรอบนี้</h3>
+            <p style="margin-bottom: 5px;"><b>1. กระเป๋าเงินเดือนค่าแรงปกติ</b> (16 เดือนก่อน - 15 เดือนนี้)</p>
+            <ul>
+                <li>รวมวันในรอบบิล: <b>${baseTotalDays} วัน</b></li>
+                <li>หักวัน "ย" และ "2ย" รวม <b>${baseDeductedDays} วัน</b></li>
+                <li>วิธีคิด: ${basePayableDays} วัน x ${DAILY_RATE} บาท = <b>${totalBasePay.toLocaleString()} บาท</b></li>
+            </ul>
+            <p style="margin-bottom: 5px;"><b>2. กระเป๋าค่าทำงานวันหยุด</b> (1 - สิ้นเดือน ของเดือนก่อน)</p>
+            <ul>
+                <li>"2ย" <b>${count2Y_Holiday} วัน</b> (เรท 800) = ${sum2Y_Holiday.toLocaleString()} บาท</li>
+                <li>"2น" <b>${count2N_Holiday} วัน</b> (เรท 400) = ${sum2N_Holiday.toLocaleString()} บาท</li>
+                <li>วิธีคิดรวม: <b>${totalHolidayPay.toLocaleString()} บาท</b></li>
+            </ul>
+        `;
+
+        if (count2Y_Rollover > 0 || count2N_Rollover > 0) {
+            const rolloverAmount = (count2Y_Rollover * RATE_2Y) + (count2N_Rollover * RATE_2N);
+            dynamicHTML += `
+                <div class="rollover-alert">
+                    <p style="margin:0; color: #991B1B;"><b>⚠️ มีเงิน ${rolloverAmount.toLocaleString()} บาท รอจ่ายรอบหน้า</b></p>
+                    <p style="margin:5px 0 0 0; font-size: 13px; color: #7F1D1D;">
+                        วันที่ 1-15 ของเดือนนี้ คุณลงรหัส 2ย หรือ 2น ไว้ เงินก้อนนี้จะถูกยกยอดไปเบิกจ่ายในรอบบิลเดือนถัดไปตามกติกาครับ
+                    </p>
+                </div>
+            `;
+        }
+
+        document.getElementById('dynamicExplanation').innerHTML = dynamicHTML;
+        document.getElementById('resultSection').classList.remove('hidden');
+        document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>

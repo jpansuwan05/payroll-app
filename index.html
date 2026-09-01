@@ -18,7 +18,7 @@
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: 12px; /* ลด Padding สำหรับขอบมือถือ */
+            padding: 12px;
             line-height: 1.6;
         }
         .container {
@@ -44,7 +44,7 @@
             border-radius: 8px;
             width: 100%;
             box-sizing: border-box;
-            font-size: 16px; /* ป้องกัน iOS Zoom */
+            font-size: 16px; 
             height: 48px;
         }
         button {
@@ -56,21 +56,20 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            width: 100%; /* ให้ปุ่มเต็มจอในมือถือ */
+            width: 100%; 
             height: 48px;
             transition: 0.2s;
             box-sizing: border-box;
         }
         button:active { background-color: var(--primary-hover); transform: scale(0.98); }
         
-        /* สไตล์ตารางแนวนอน - ปรับให้ไถบนมือถือลื่นขึ้น */
         .table-wrapper {
             overflow-x: auto;
             margin-top: 16px;
             padding-bottom: 10px;
             border-radius: 8px;
             border: 1px solid var(--border);
-            -webkit-overflow-scrolling: touch; /* สมูทสโครลบน iOS */
+            -webkit-overflow-scrolling: touch; 
         }
         table {
             border-collapse: collapse;
@@ -81,7 +80,7 @@
             border: 1px solid var(--border);
             padding: 6px;
             text-align: center;
-            min-width: 65px; /* ความกว้างขั้นต่ำสำหรับนิ้วจิ้ม */
+            min-width: 65px; 
         }
         
         .month-header {
@@ -107,26 +106,24 @@
             white-space: nowrap;
         }
         
-        /* Dropdown ที่เหมาะกับนิ้วมือ */
         select.work-type {
             width: 100%;
-            height: 40px; /* เพิ่มความสูงให้นิ้วจิ้มง่าย */
+            height: 40px; 
             padding: 0 2px;
             border-radius: 6px;
             border: 1px solid #D1D5DB;
-            font-size: 16px; /* บังคับ 16px ป้องกันมือถือซูมเข้า */
+            font-size: 16px; 
             cursor: pointer;
             text-align: center;
             font-weight: bold;
             background-color: transparent;
-            -webkit-appearance: none; /* ซ่อนลูกศรใน iOS/Android บางรุ่นเพื่อให้ข้อความอยู่ตรงกลาง */
+            -webkit-appearance: none; 
             appearance: none;
         }
         
-        /* ผลลัพธ์ทางการเงิน */
         .result-box {
             display: grid;
-            grid-template-columns: 1fr; /* บนมือถือให้เรียงคอลัมน์เดียวแนวตั้ง */
+            grid-template-columns: 1fr; 
             gap: 12px;
             margin-top: 16px;
         }
@@ -148,7 +145,6 @@
         .summary-card .amount { font-size: 24px; font-weight: bold; color: var(--primary); }
         .hidden { display: none; }
         
-        /* กล่องอธิบายผลลัพธ์ */
         .dynamic-explanation {
             margin-top: 20px;
             padding: 16px;
@@ -173,7 +169,6 @@
         .explanation h3 { font-size: 16px; }
         .explanation ul { padding-left: 20px; }
         
-        /* Hint box บนตาราง */
         .hint-box {
             font-size: 11px;
             background: white;
@@ -183,6 +178,16 @@
             margin-bottom: 10px;
             width: 100%;
             box-sizing: border-box;
+        }
+        
+        /* สไตล์เสริมสำหรับรายการวันที่ */
+        .date-list {
+            font-size: 12px;
+            color: #6B7280;
+            display: block;
+            margin-top: 2px;
+            margin-bottom: 8px;
+            line-height: 1.4;
         }
     </style>
 </head>
@@ -288,30 +293,34 @@
         dateRow.innerHTML = '';
         inputRow.innerHTML = '';
 
+        const targetMonthName = getMonthName(targetMonth);
+        const prevMonthName = getMonthName(prevMonth);
+
         const thTarget = document.createElement('th');
         thTarget.colSpan = 15;
         thTarget.className = 'month-header header-target';
-        thTarget.innerText = `${getMonthName(targetMonth)} (1-15)`;
+        thTarget.innerText = `${targetMonthName} (1-15)`;
         monthRow.appendChild(thTarget);
 
         const thPrev = document.createElement('th');
         thPrev.colSpan = daysInPrevMonth;
         thPrev.className = 'month-header header-prev';
-        thPrev.innerText = `เดือนก่อน: ${getMonthName(prevMonth)} (1-${daysInPrevMonth})`;
+        thPrev.innerText = `เดือนก่อน: ${prevMonthName} (1-${daysInPrevMonth})`;
         monthRow.appendChild(thPrev);
 
+        // ส่งชื่อเดือนเข้าไปในฟังก์ชัน createCell ด้วยเพื่อเก็บเป็นข้อมูล
         for (let d = 1; d <= 15; d++) {
-            createCell(d, true, false, dateRow, inputRow, 'col-target', true);
+            createCell(d, true, false, dateRow, inputRow, 'col-target', true, targetMonthName);
         }
         for (let d = 1; d <= daysInPrevMonth; d++) {
-            createCell(d, d >= 16, true, dateRow, inputRow, 'col-prev', false);
+            createCell(d, d >= 16, true, dateRow, inputRow, 'col-prev', false, prevMonthName);
         }
 
         document.getElementById('timesheetSection').classList.remove('hidden');
         document.getElementById('resultSection').classList.add('hidden');
     }
 
-    function createCell(date, isBase, isHoliday, dateRow, inputRow, columnClass, isTargetMonth) {
+    function createCell(date, isBase, isHoliday, dateRow, inputRow, columnClass, isTargetMonth, monthName) {
         const th = document.createElement('th');
         th.className = `date-header ${columnClass}`; 
         th.innerHTML = `
@@ -326,7 +335,7 @@
         const td = document.createElement('td');
         td.className = columnClass; 
         td.innerHTML = `
-            <select class="work-type" data-base="${isBase}" data-holiday="${isHoliday}" data-istarget="${isTargetMonth}" onchange="updateCellColor(this)">
+            <select class="work-type" data-base="${isBase}" data-holiday="${isHoliday}" data-istarget="${isTargetMonth}" data-date="${date} ${monthName}" onchange="updateCellColor(this)">
                 <option value="ปกติ">ปกติ</option>
                 <option value="ย">ย</option>
                 <option value="2ย">2ย</option>
@@ -358,23 +367,42 @@
         let baseTotalDays = 0, baseDeductedDays = 0, count2Y_Holiday = 0, count2N_Holiday = 0;
         let count2Y_Rollover = 0, count2N_Rollover = 0;
 
+        // อาร์เรย์สำหรับเก็บข้อมูลวันที่
+        let deductedDates = [];
+        let holiday2YDates = [];
+        let holiday2NDates = [];
+        let rolloverDates = []; 
+
         selects.forEach(select => {
             const type = select.value;
             const isBase = select.dataset.base === "true";
             const isHoliday = select.dataset.holiday === "true";
             const isTargetMonth = select.dataset.istarget === "true";
+            const fullDate = select.dataset.date; // ดึงวันที่และเดือนออกมา
 
             if (isBase) {
                 baseTotalDays++;
-                if (type === 'ย' || type === '2ย') baseDeductedDays++;
+                if (type === 'ย' || type === '2ย') {
+                    baseDeductedDays++;
+                    deductedDates.push(`${fullDate} (${type})`); // เก็บวันที่ถูกหัก
+                }
             }
             if (isHoliday) {
-                if (type === '2ย') count2Y_Holiday++;
-                if (type === '2น') count2N_Holiday++;
+                if (type === '2ย') {
+                    count2Y_Holiday++;
+                    holiday2YDates.push(fullDate);
+                }
+                if (type === '2น') {
+                    count2N_Holiday++;
+                    holiday2NDates.push(fullDate);
+                }
             }
             if (isTargetMonth) {
-                if (type === '2ย') count2Y_Rollover++;
-                if (type === '2น') count2N_Rollover++;
+                if (type === '2ย' || type === '2น') {
+                    if (type === '2ย') count2Y_Rollover++;
+                    if (type === '2น') count2N_Rollover++;
+                    rolloverDates.push(`${fullDate} (${type})`);
+                }
             }
         });
 
@@ -389,29 +417,43 @@
         document.getElementById('resHolidayPay').innerText = totalHolidayPay.toLocaleString() + ' บาท';
         document.getElementById('resNetPay').innerText = netPay.toLocaleString() + ' บาท';
         
+        // เตรียมข้อความวันที่
+        let deductedText = deductedDates.length > 0 ? `<span class="date-list">↳ <b>วันที่ถูกหัก:</b> ${deductedDates.join(', ')}</span>` : '';
+        let hol2YText = holiday2YDates.length > 0 ? `<span class="date-list">↳ <b>วันที่:</b> ${holiday2YDates.join(', ')}</span>` : '';
+        let hol2NText = holiday2NDates.length > 0 ? `<span class="date-list">↳ <b>วันที่:</b> ${holiday2NDates.join(', ')}</span>` : '';
+
         let dynamicHTML = `
             <h3>📝 รายละเอียดการคำนวณรอบนี้</h3>
             <p style="margin-bottom: 5px;"><b>1. กระเป๋าเงินเดือนค่าแรงปกติ</b> (16 เดือนก่อน - 15 เดือนนี้)</p>
             <ul>
                 <li>รวมวันในรอบบิล: <b>${baseTotalDays} วัน</b></li>
-                <li>หักวัน "ย" และ "2ย" รวม <b>${baseDeductedDays} วัน</b></li>
+                <li>หักวัน "ย" และ "2ย" รวม <b>${baseDeductedDays} วัน</b>
+                    ${deductedText}
+                </li>
                 <li>วิธีคิด: ${basePayableDays} วัน x ${DAILY_RATE} บาท = <b>${totalBasePay.toLocaleString()} บาท</b></li>
             </ul>
             <p style="margin-bottom: 5px;"><b>2. กระเป๋าค่าทำงานวันหยุด</b> (1 - สิ้นเดือน ของเดือนก่อน)</p>
             <ul>
-                <li>"2ย" <b>${count2Y_Holiday} วัน</b> (เรท 800) = ${sum2Y_Holiday.toLocaleString()} บาท</li>
-                <li>"2น" <b>${count2N_Holiday} วัน</b> (เรท 400) = ${sum2N_Holiday.toLocaleString()} บาท</li>
+                <li>"2ย" <b>${count2Y_Holiday} วัน</b> (เรท 800) = ${sum2Y_Holiday.toLocaleString()} บาท
+                    ${hol2YText}
+                </li>
+                <li>"2น" <b>${count2N_Holiday} วัน</b> (เรท 400) = ${sum2N_Holiday.toLocaleString()} บาท
+                    ${hol2NText}
+                </li>
                 <li>วิธีคิดรวม: <b>${totalHolidayPay.toLocaleString()} บาท</b></li>
             </ul>
         `;
 
         if (count2Y_Rollover > 0 || count2N_Rollover > 0) {
             const rolloverAmount = (count2Y_Rollover * RATE_2Y) + (count2N_Rollover * RATE_2N);
+            let rolloverTextList = rolloverDates.length > 0 ? `<span class="date-list" style="color:#991B1B;">↳ <b>วันที่รอยกยอด:</b> ${rolloverDates.join(', ')}</span>` : '';
+            
             dynamicHTML += `
                 <div class="rollover-alert">
                     <p style="margin:0; color: #991B1B;"><b>⚠️ มีเงิน ${rolloverAmount.toLocaleString()} บาท รอจ่ายรอบหน้า</b></p>
                     <p style="margin:5px 0 0 0; font-size: 13px; color: #7F1D1D;">
                         วันที่ 1-15 ของเดือนนี้ คุณลงรหัส 2ย หรือ 2น ไว้ เงินก้อนนี้จะถูกยกยอดไปเบิกจ่ายในรอบบิลเดือนถัดไปตามกติกาครับ
+                        ${rolloverTextList}
                     </p>
                 </div>
             `;
